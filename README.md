@@ -135,7 +135,6 @@ Prompts LLM pour guider :
 ├── app.js                   # Interface utilisateur
 ├── data/                    # Données d'entraînement CALM
 │   ├── flows.yml           # Flux de conversation métier
-│   ├── nlu.yml             # Compréhension du langage
 │   └── patterns.yml        # Patterns de reconnaissance
 ├── prompts/                 # Prompts pour l'IA générative
 ├── static_audio/            # Fichiers audio pour les réponses
@@ -289,7 +288,7 @@ python -c "import nltk; nltk.download('all')"
 
 ## 📝 Licence
 
-Ce projet est sous licence [Votre Licence] - voir le fichier LICENSE pour plus de détails.
+Ce projet est sous licence - voir le fichier LICENSE pour plus de détails.
 
 ## 🏢 Cas d'Usage Entreprise
 
@@ -301,13 +300,4 @@ Ce projet est sous licence [Votre Licence] - voir le fichier LICENSE pour plus d
 
 ## 📞 Support
 
-Pour le support technique, créez une issue dans ce repository ou contactez [votre-email@entreprise.com]
-
-## 🎯 Roadmap
-
-- [ ] Intégration avec outils de gestion de projet (Jira, Trello)
-- [ ] Tableau de bord analytique
-- [ ] Export des rapports en PDF
-- [ ] Intégration avec systèmes ERP
-- [ ] Support multilingue avancé
-- [ ] API GraphQL
+Pour le support technique, créez une issue dans ce repository ou contactez [mohamedamineazouzi49@gmail.com]
