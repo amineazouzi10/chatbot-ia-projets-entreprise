@@ -1,0 +1,119 @@
+# Environment variables - CRITICAL FOR YOUR API KEYS
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+
+# Google Cloud Credentials
+*.json
+credentials/
+google-credentials.json
+service-account.json
+
+# API Keys and secrets
+config/secrets.yml
+secrets/
+keys/
+
+# Rasa Pro specific
+models/
+.rasa/
+rasa.db
+events.db
+tracker.db
+graph.html
+story_graph.dot
+story_graph.html
+
+# FAISS indexes (can be large)
+*.index
+faiss_index/
+vector_store/
+
+# NLTK data (downloaded automatically)
+nltk_data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Flask
+instance/
+.webassets-cache
+
+# Audio files (if large)
+static_audio/*.wav
+static_audio/*.mp3
+uploads/
+exports/
+backups/
+
+# Logs
+*.log
+logs/
+debug.log
+error.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node.js (for frontend)
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Pickled models (can be large)
+*.pkl
+*.pickle
+
+# Test coverage
+.coverage
+htmlcov/

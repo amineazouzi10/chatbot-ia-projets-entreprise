@@ -1,0 +1,289 @@
+version: "3.1"
+
+
+flows:
+
+  pattern_chitchat: # This flow will be triggered by the 'chitchat' command
+    description: "Handles inputs identified as chitchat by the NLU (often out-of-scope)."
+    steps:
+      - action: utter_out_of_scope
+      - action: utter_guiding_prompt
+      - action: action_listen # Wait for the user's next input
+
+  pattern_trigger_fallback:
+    description: "Handles inputs where the LLM Command Generator doesn't produce a valid command, often out-of-scope queries."
+    steps:
+      - action: utter_out_of_scope
+      - action: utter_guiding_prompt
+      - action: action_listen # Crucial: wait for the user's next input
+
+    # Your existing silent overrides for specific internal issues:
+  pattern_cannot_handle:
+      description: "Silent handler for specific internal processing issues."
+      steps:
+        - action: utter_silent_response
+
+  pattern_search:
+      description: "Silent handler for knowledge queries if custom logic is preferred."
+      steps:
+        - action: utter_silent_response
+
+  hello_flow:
+    description: >
+      This flow detects the greetings of the user and responds to it.
+    steps:
+      - action: utter_greet
+      - link: collect_project_info  # Link to the project information collection flow
+
+  collect_project_info:
+    description: >
+      Collects project info, prompting for multiple missing slots at once using a loop.
+      Validates description and tasks after collection.
+    steps:
+      # Start the loop: Check slots, prompt if needed, set flag
+      - id: check_slots_step
+        action: action_check_project_slots
+        next:
+          # Condition to exit the loop: all_slots_filled is true
+          - if: "slots.all_slots_filled == true"
+            then: validate_description_step  # Proceed to validation/completion
+          # Condition to stay in the loop: all_slots_filled is false
+          - else:
+              - action: action_listen  # Wait for user response
+                next: check_slots_step  # Loop back to check slots AFTER user input
+
+      # Validate description after all slots are collected
+      - id: validate_description_step
+        action: action_validate_project_description
+        next:
+          # If validation failed (description slot is None), loop back to collect again
+          - if: "slots.description == null"
+            then:
+              # Reset the flag to re-enter the loop
+              - set_slots:
+                  - all_slots_filled: false
+                next: check_slots_step
+          # If validation passed, proceed to next validation
+          - else: validate_tasks_step
+
+      # Validate tasks after description validation passes
+      - id: validate_tasks_step
+        action: action_validate_project_tasks
+        next:
+          # If validation failed (tasks slot is None), loop back to collect again
+          - if: "slots.tasks == null"
+            then:
+              # Reset the flag to re-enter the loop
+              - set_slots:
+                  - all_slots_filled: false
+                next: check_slots_step
+          # If validation passed, proceed to completion
+          - else: utter_completion_step
+
+      # Final step to utter completion message
+      - id: utter_completion_step
+        action: utter_project_details_complete
+
+      - link: project_recommendations
+
+  project_recommendations:
+    description: >
+      Handles the process of generating and presenting project recommendations.
+    steps:
+
+      # 1) Ask the user if they want recommendations
+      - id: ask_for_recommendations
+        action: utter_ask_if_want_recommendations
+        next: listen_for_recommendations
+
+      # 2) Listen for their reply
+      - id: listen_for_recommendations
+        action: action_listen
+        next: branch_recommendations
+
+      # 3) Branch on intent
+      - id: branch_recommendations
+        noop: true
+        next:
+          - if: "context.latest_message.intent.name == 'affirm'"
+            then: confirm_generating_recommendations
+          - if: "context.latest_message.intent.name == 'deny'"
+            then: END
+          - else: confirm_generating_recommendations
+
+      # 4) Confirm and kick off recommendation generation
+      - id: confirm_generating_recommendations
+        action: utter_generating_recommendations
+        next: generate_recommendations_step
+
+      # 5) Invoke recommendation action
+      - id: generate_recommendations_step
+        action: action_get_project_recommendations
+        next:
+          - if: "slots.recommendations != null"
+            then: present_recommendations_step
+          - else:
+              - action: utter_recommendation_error
+                next: END
+
+      # 6) Present the results
+      - id: present_recommendations_step
+        action: action_present_recommendations
+        next: ask_followup_questions_step
+
+      # 7) Ask if the user has questions or wants to modify recommendations
+      - id: ask_followup_questions_step
+        action: utter_ask_followup_questions
+        next: link_to_recommendations_followup
+
+      # 8) Link to followup flow
+      - id: link_to_recommendations_followup
+        link: recommendations_followup
+
+  recommendations_followup:
+    description: >
+      Handles follow-up questions and modification requests about recommendations.
+    steps:
+      # 1) Listen for user questions or modification requests
+      - id: listen_for_followup
+        action: action_listen
+        next: process_followup
+
+      # 2) Process the followup question or modification
+      - id: process_followup
+        action: action_handle_recommendations_followup
+        next:
+          # Check if the user's message contains an intent to end the conversation
+          - if: "context.latest_message.intent.name == 'goodbye'"
+            then: END
+          # Check if the user wants to move to cost estimation
+          - if: context.latest_message.text matches "(?i).*(coût|cout|tarif|prix|budget|estimation|combien).*"
+            then: link_to_cost_estimation
+          # Otherwise, continue the loop to handle more questions
+          - else: listen_for_followup
+
+      # 4) Link to the cost estimation flow
+      - id: link_to_cost_estimation
+        link: cost_estimation_flow
+
+  cost_estimation_flow:
+    description: >
+      Handles the process of estimating project costs based on resource recommendations
+      with improved follow-up conversation handling.
+    steps:
+      # 1) Entry point - introduce the cost estimation process
+      - id: start_cost_estimation
+        action: utter_start_cost_estimation
+        next: explain_cost_estimation_process
+
+      # 2) Explain the process to the user
+      - id: explain_cost_estimation_process
+        action: utter_explain_cost_estimation_process
+        next: confirm_resource_values
+
+      # 3) Confirm current resource values or update them if needed
+      - id: confirm_resource_values
+        action: action_confirm_resource_values
+        next:
+          - if: "slots.resources_confirmed == true"
+            then: ask_for_financial_info
+          - else:
+              - action: utter_ask_for_resource_updates
+                next: process_resource_update
+
+      # 4) Process resource updates if needed
+      - id: process_resource_update
+        action: action_process_resource_update
+        next: ask_for_financial_info
+
+      # 5) Ask for all financial information at once (salaries and FG%)
+      - id: ask_for_financial_info
+        action: action_ask_for_salaries
+        next: collect_financial_info_input
+
+      # Dedicated step to listen for user salary inputs
+      - id: collect_financial_info_input
+        action: action_listen
+        next: collect_financial_info_processing
+
+      # 6) Process the financial information provided
+      - id: collect_financial_info_processing
+        action: action_collect_salary_info
+        next:
+          - if: "slots.all_salaries_collected == true"
+            then: calculate_cost_estimation
+          - else: collect_financial_info_input
+
+      # 7) Calculate cost estimation based on all collected data
+      - id: calculate_cost_estimation
+        action: action_calculate_cost_estimation
+        next: present_cost_estimation
+
+      # 8) Present the cost estimation and initiate follow-up loop
+      - id: present_cost_estimation
+        action: action_present_cost_estimation
+        next: cost_followup_input
+
+      # 9) Listen for user input in the follow-up conversation loop
+      - id: cost_followup_input
+        action: action_listen
+        next: process_cost_followup
+
+      # 10) Process the follow-up using Gemini for intent detection
+      - id: process_cost_followup
+        action: action_handle_cost_followup
+        next:
+          - if: context.latest_message.text matches "(?i).*(goodbye|merci).*"
+            then: finalize_cost_estimation
+          - else: cost_followup_input
+
+      # 11) Finalize the cost estimation process
+      - id: finalize_cost_estimation
+        action: utter_finalize_cost_estimation
+        next: ask_if_want_risk_estimation
+
+      - id: ask_if_want_risk_estimation
+        action: utter_ask_if_want_risk_estimation  # "Voulez-vous estimer le risque projet ?"
+        next: listen_for_risk_flow
+
+      - id: listen_for_risk_flow
+        action: action_listen
+        next:
+          - if: context.latest_message.text matches "(?i).*(goodbye|merci|risque|risk).*"
+            then: link_to_risk_estimation
+          - else: END
+
+      - id: link_to_risk_estimation
+        link: project_risk_estimation_flow
+
+
+  project_risk_estimation_flow:
+    description: >
+      Handles the process of collecting missing risk fields, launching RAG-based risk assessment, and follow-up conversation with the user.
+    steps:
+      - action: action_start_risk_estimation
+        next: collect_risk_fields
+
+      - id: collect_risk_fields
+        action: action_collect_risk_fields
+        next:
+          - if: "slots.risk_fields_filled == true"
+            then: present_rag_risk_assessment
+          - else: wait_for_user_risk_fields
+
+      - id: wait_for_user_risk_fields
+        action: action_listen
+        next: collect_risk_fields
+
+      - id: present_rag_risk_assessment
+        action: action_present_rag_risk_assessment
+        next: risk_estimation_followup
+
+      - id: risk_estimation_followup
+        action: action_listen
+        next: handle_rag_risk_followup
+
+      - id: handle_rag_risk_followup
+        action: action_handle_rag_risk_followup
+        next: risk_estimation_followup
+

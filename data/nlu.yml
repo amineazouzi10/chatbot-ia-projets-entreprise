@@ -1,0 +1,20 @@
+version: "3.1"
+
+nlu:
+# Although CompactLLMCommandGenerator generates commands, providing
+# examples of what's out-of-scope helps the LLM learn when NOT
+# to generate commands related to your bot's core tasks.
+# The 'intent' key here is a way to label these examples.
+- intent: out_of_scope
+  examples: |
+    - Quel temps fait-il ?
+    - Raconte-moi une blague
+    - Qui es-tu ?
+    - Quelle est ta couleur préférée ?
+    - Je veux commander une pizza
+    - Ma voiture est rouge
+    - Comment faire des pâtes ?
+    - Quelle heure est-il ?
+    - Chante-moi une chanson
+    - du charabia complet
+    - zzz xxx ccc vvv

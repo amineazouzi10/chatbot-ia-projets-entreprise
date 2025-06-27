@@ -1,0 +1,18 @@
+recipe: default.v1
+language: fr
+pipeline:
+- name: CompactLLMCommandGenerator
+  #prompt_template: prompts/project_assistant_template.jinja2
+  llm:
+    model_group: gemini_llm
+
+  flow_retrieval:
+    active: false
+
+policies:
+- name: FlowPolicy
+- name: MemoizationPolicy
+- name: RulePolicy
+#  - name: EnterpriseSearchPolicy
+assistant_id: 20250424-233554-rowdy-gold
+

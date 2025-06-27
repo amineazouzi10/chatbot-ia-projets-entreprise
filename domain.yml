@@ -1,0 +1,301 @@
+version: "3.1"
+
+slots:
+  project_name:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+  description:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+  duration:
+    type: float
+    influence_conversation: true
+    mappings:
+      - type: custom
+  complexity:
+    type: float
+    influence_conversation: true
+    mappings:
+      - type: custom
+  sector:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+  tasks:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+  all_slots_filled:
+    type: bool
+    initial_value: false
+    influence_conversation: true
+    mappings:
+      - type: custom
+  recommendations:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  resources_confirmed:
+    type: bool
+    initial_value: false
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  skills_distribution:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  total_employees:
+    type: float
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  salaries:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  current_role:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  all_salaries_collected:
+    type: bool
+    initial_value: false
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  fg_percentage:
+    type: float
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  cost_estimation:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  cost_estimation_complete:
+    type: bool
+    initial_value: false
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  # --- New slots for RAG risk estimation ---
+  pays:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  budget_initial_k:
+    type: float
+    influence_conversation: true
+    mappings:
+        - type: custom
+
+  budget_final_k:
+    type: float
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  ecart_budget_pct:
+    type: float
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  taux_imposition_pct:
+    type: float
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  mode_de_paiement:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  qualite_des_exigences_1_5:
+    type: float
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+    # These are the key control slots for the RAG process
+  risk_fields_filled:
+    type: bool
+    initial_value: false
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+  rag_risk_output:
+    type: text
+    influence_conversation: true
+    initial_value: ""
+    mappings:
+      - type: custom
+
+
+responses:
+  utter_greet:
+    - text: >
+        Salut! 👋 Je suis votre assistant expert en planification de projets 📅, en estimation des coûts 💰 et en anticipation des risques ⚠️
+        Pour commencer,
+  utter_project_details_complete:
+    - text: "🎉 Super, j'ai toutes les infos nécessaires sur ton projet! Voici ce que j'ai noté :\n- 🏷️ Nom du projet : {project_name}\n- 📝 Description : {description}\n- ⏳ Durée : {duration} mois\n- 📈 Complexité : {complexity}/5\n- 🏢 Secteur : {sector}\n- 🛠️ Tâches principales : {tasks}\nMerci beaucoup! 🚀"
+
+  # Validation responses
+  utter_insufficient_description:
+    - text: "La description fournie semble insuffisante. Veuillez fournir davantage de détails en incluant, par exemple, les objectifs, le contexte et les défis du projet."
+  utter_insufficient_tasks:
+    - text: "Les informations concernant les tâches semblent insuffisantes. Veuillez détailler chaque tâche en précisant l'objectif, les ressources nécessaires, les dépendances et les résultats attendus."
+  utter_invalid_complexity:
+     - text: "📈 Sur une échelle de 1 à 5, quel serait le niveau de complexité de ton projet?"
+  utter_generating_recommendations:
+    - text: "Je suis en train de générer des recommandations pour votre projet. Un instant s'il vous plaît..."
+
+  utter_recommendation_error:
+    - text: "Je suis désolé, mais je n'ai pas pu générer des recommandations pour votre projet. Veuillez réessayer plus tard."
+
+  utter_ask_if_want_recommendations:
+    - text: "Souhaitez-vous que je vous fournisse des recommandations pour ce projet?"
+
+  utter_ask_followup_questions:
+    - text: "Avez-vous des questions sur ces recommandations ou souhaitez-vous suggérer des modifications? Vous pouvez me demander d'expliquer certains aspects ou suggérer des ajustements concernant le nombre d'employés, les compétences requises, ou la répartition des ressources."
+
+  utter_recommendations_modified:
+    - text: "J'ai mis à jour les recommandations selon votre demande. Voici les recommandations révisées:"
+
+  utter_out_of_scope:
+    - text: "Je suis désolé, cela sort un peu de mon domaine d'expertise. Je suis ici pour vous aider avec la planification de projets et les recommandations associées."
+    - text: "Hmm, je ne suis pas sûr de pouvoir vous aider avec ça. Mon rôle est de vous assister pour collecter les informations de votre projet, valider ses aspects et vous fournir des recommandations."
+
+  utter_guiding_prompt:
+      - text: "Comment puis-je vous assister concernant votre projet aujourd'hui ?"
+      - text: "Pouvons-nous revenir à la planification de votre projet ? Quels détails souhaitez-vous aborder ?"
+
+  utter_silent_response:
+      - text: ""
+
+  utter_start_cost_estimation:
+    - text: >
+        👨‍💻 Parfait, je vais vous aider à estimer le coût total de votre projet.
+        Je vais me baser sur les ressources recommandées précédemment.
+
+  utter_explain_cost_estimation_process:
+    - text: |
+          Pour estimer le coût total, j'aurai besoin des informations suivantes:
+          1️⃣ Confirmer les ressources humaines requises
+          2️⃣ Le salaire mensuel pour chaque type de poste
+          3️⃣ Le pourcentage de frais généraux (FG%)
+
+          Ensuite, je calculerai l'estimation totale du coût du projet.
+
+  utter_ask_for_resource_updates:
+    - text: >
+          Souhaitez-vous modifier le nombre de ressources ou la répartition des compétences 
+          avant de continuer avec l'estimation des coûts?
+
+  utter_ask_fg_percentage:
+    - text: >
+          Quel est le pourcentage de frais généraux (FG%) à appliquer pour ce projet?
+          (Par exemple, 20% pour les coûts indirects comme les locaux, l'électricité, etc.)
+
+  utter_ask_cost_followup:
+    - text: >
+          Avez-vous des questions sur cette estimation de coût? Je peux vous fournir
+          des explications supplémentaires, des suggestions d'optimisation ou effectuer
+          des ajustements si nécessaire.
+
+  utter_finalize_cost_estimation:
+    - text: >
+          Parfait! L'estimation de coût pour votre projet est maintenant finalisée.
+          Si vous avez besoin de modifier l'estimation à l'avenir ou si vous avez
+          d'autres questions concernant votre projet, n'hésitez pas à me demander.
+
+  utter_present_cost_estimation:
+    - text: |
+        Voici l'estimation de coût pour votre projet:
+        
+        📊 **Résumé de l'estimation**:
+        - Durée du projet: {duration} mois
+        - Coût total des salaires: {total_salary_cost} €
+        - Frais généraux ({fg_percentage}%): {overhead_cost} €
+        - **Coût total du projet**: {total_project_cost} €
+        
+        Avez-vous des questions sur cette estimation ou souhaitez-vous plus de détails sur un aspect particulier?
+
+  # --- New RAG risk estimation responses ---
+  utter_start_risk_estimation:
+    - text: >
+        ⚠️ Nous allons maintenant passer à l'estimation des risques du projet.
+        Je vais avoir besoin de quelques informations complémentaires pour une analyse précise.
+
+  utter_risk_fields_collected:
+    - text: >
+        Parfait! J'ai maintenant toutes les informations nécessaires pour analyser les risques
+        de votre projet. Je vais lancer l'estimation...
+
+  utter_risk_fields_missing:
+    - text: >
+        Merci de me fournir les champs suivants pour procéder à l'estimation des risques :
+        {missing_fields_prompt}
+
+  utter_risk_assessment_in_progress:
+    - text: >
+        Analyse des risques en cours... Je recherche des projets similaires et j'interroge mon système pour une estimation personnalisée.
+
+  utter_risk_assessment_ready:
+    - text: >
+        Voici l'évaluation détaillée des risques pour votre projet :
+        {risk_assessment_summary}
+
+  utter_ask_risk_followup:
+    - text: >
+        Avez-vous des questions concernant ces risques, souhaitez-vous des recommandations ou une explication détaillée pour un risque particulier ?
+
+  utter_ask_if_want_risk_estimation:
+    - text: "Voulez-vous que j'estime le risque de votre projet avec une analyse intelligente basée sur des projets similaires ?"
+actions:
+    - action_validate_project_description
+    - action_validate_project_tasks
+    - action_check_project_slots
+    - action_get_project_recommendations
+    - action_present_recommendations
+    - action_handle_recommendations_followup
+    - action_confirm_resource_values
+    - action_process_resource_update
+    - action_ask_for_salaries
+    - action_collect_salary_info
+    - action_process_fg_percentage
+    - action_calculate_cost_estimation
+    - action_handle_cost_followup
+    - action_present_cost_estimation
+    # RAG Risk estimation actions
+    - action_start_risk_estimation
+    - action_collect_risk_fields
+    - action_present_rag_risk_assessment
+    - action_handle_rag_risk_followup
